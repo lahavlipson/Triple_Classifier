@@ -12,26 +12,46 @@ def setupVectors():#Creates dictionary of vectors and their embedding vectors
            # print(arr[0])
             vectorDict[arr[0]] = list(map(float,arr[1:]))
     return vectorDict
+
+def isLineValid(line):
+    arr = line.rstrip().split(' ')
+    if arr[2][0:2] == 'op' or arr[2][0:4] == 'name':
+        return False
+    alphabet = list("abcdefghijklmnopqrstuvwxyz")
+    for letter in alphabet:
+        if ("-" + letter) in line:
+            return False
+    return True
   
 def setUpTripleDict():#Creates an array of sets of triples
-    tripleDict = {}
+    tripDict = {}
+    s = []#set()#Attempting to remove all duplicate triples. DOESN'T SEEM TO WORK
     with open("deft-p2-amr-r2-training-ALL.triples") as f:
-        for line in f:      
-            trip = line.rstrip().split(' ')
-            graphNum = int(trip[0])
-            if graphNum not in tripleDict:
-                tripleDict[graphNum] = set()
-            if trip[2][0:2] != 'op' and trip[2][0:4] != 'name':
-                lst = trip[1:]
-                #Removes -03, -01, etc. for cases like Jump-02
+        for line in f:
+            s.append(line)
+        
+    for line in s:      
+        trip = line.rstrip().split(' ')
+        graphNum = int(trip[0])
+        if graphNum not in tripDict:
+            tripDict[graphNum] = set()
+        if isLineValid(line):
+            
+            
+            
+            lst = trip[1:]
+                        
+            #Removes -03, -01, etc. for cases like Jump-02
+            if lst[1] != 'polarity':
                 indexOfDash1 = lst[0].find('-')
                 indexOfDash2 = lst[2].find('-')
                 if indexOfDash1 >= 0:
                     lst[0] = lst[0][0:indexOfDash1]
                 if indexOfDash2 >= 0:
-                    lst[2] = lst[0][2:indexOfDash2]
-                tripleDict[graphNum].add(tuple(lst))
-    return tripleDict
+                    lst[2] = lst[2][0:indexOfDash2] 
+                
+            tripDict[graphNum].add(tuple(lst))
+    return tripDict
 
 def setUpRelations(tripDict):#Creates a list of all the possible relations (About 100)
     relationSet = set()
@@ -58,10 +78,10 @@ def setUpGoodTriples(tripDict):#Just compiles all of the triple from tripleDict 
             setOfGoodTriples.add(trip)
     return setOfGoodTriples
 
-def setUpBadTriples():#Recombines triples to form bad ones
+def setUpBadTriples(tripDict):#Recombines triples to form bad ones
     setOfBadTriples = set()
-    for i in tripleDict:
-        listOfTriples = list(tripleDict[i])
+    for i in tripDict:
+        listOfTriples = list(tripDict[i])
         if (len(listOfTriples) >= 2):
         #Need two triples in order to create a good and bad one
             for j in range(0,len(listOfTriples)):
@@ -88,9 +108,10 @@ def turnTripleIntoGiantVector(triple, allRelations):#Returns a vector that can b
     
 vectorDict = setupVectors()
 tripleDict = setUpTripleDict()
+print(tripleDict[103])
 listOfRelations = setUpRelations(tripleDict)
 setOfGoodTriples = setUpGoodTriples(tripleDict)
-setOfBadTriples = setUpBadTriples()
+setOfBadTriples = setUpBadTriples(tripleDict)
 print(len(setOfGoodTriples))#Number tuples
 print(len(setOfBadTriples))#NOTE: There are many more bad tuples than good tuples because many of the good tuples are identical
 print(turnTripleIntoGiantVector(('job', 'topic', 'that'),listOfRelations)[45:55])#Testing
