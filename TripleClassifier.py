@@ -157,10 +157,11 @@ def main():
                 lst = []
                 for i in range(tripleArr.size):
                     lst.append(float("{:.2f}".format(tripleArr[i])))
-                file_handler.write(str(lst).rstrip(']').lstrip('[')+"\n)
+                file_handler.write(str(lst).rstrip(']').lstrip('[').replace(" ", "")+"\n")#Replace \n with \n\n\n to make separate arrays more easily visible
                 if lines%10000 == 0:
                     print("Lines:",lines)
                 lines+=1
+                assert(len(lst)==146)#Sanity check
     
 
 
