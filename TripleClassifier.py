@@ -9,7 +9,6 @@ def setupVectors():#Creates dictionary of vectors and their embedding vectors
         for line in f:
             line = line.rstrip()
             arr = line.split(' ')
-           # print(arr[0])
             vectorDict[arr[0]] = list(map(float,arr[1:]))
     return vectorDict
 
@@ -36,8 +35,6 @@ def setUpTripleDict():#Creates an array of sets of triples
         if graphNum not in tripDict:
             tripDict[graphNum] = set()
         if isLineValid(line):
-            
-            
             
             lst = trip[1:]
                         
@@ -96,29 +93,76 @@ def setUpBadTriples(tripDict):#Recombines triples to form bad ones
     return setOfBadTriples
     
     
-def turnTripleIntoGiantVector(triple, allRelations):#Returns a vector that can be trained on. Returns None if the first or last word is not in the embedding
-    if triple[0] in vectorDict and triple[2] in vectorDict:
-        vec1 = vectorDict[triple[0]]
+def turnTripleIntoGiantVector(triple, allRelations, vecDict):#Returns a vector that can be trained on. Returns None if the first or last word is not in the embedding
+    if triple[0] in vecDict and triple[2] in vecDict:
+        vec1 = vecDict[triple[0]]
         vec2 = getOneHotEncodingOfRelation(triple[1],allRelations)
-        vec3 = vectorDict[triple[2]]
+        vec3 = vecDict[triple[2]]
         return np.concatenate((vec1, vec2, vec3))
     else:
         return None
     
+def createTrainingData():#Returns list of triples to train on. The value of the triple (good/bad) is the last element. 
+ 
+    vectorDict = setupVectors()
+    tripleDict = setUpTripleDict()
     
-vectorDict = setupVectors()
-tripleDict = setUpTripleDict()
-print(tripleDict[103])
-listOfRelations = setUpRelations(tripleDict)
-setOfGoodTriples = setUpGoodTriples(tripleDict)
-setOfBadTriples = setUpBadTriples(tripleDict)
-print(len(setOfGoodTriples))#Number tuples
-print(len(setOfBadTriples))#NOTE: There are many more bad tuples than good tuples because many of the good tuples are identical
-print(turnTripleIntoGiantVector(('job', 'topic', 'that'),listOfRelations)[45:55])#Testing
-count = 0
-for trip in setOfGoodTriples:
-    h = turnTripleIntoGiantVector(trip, listOfRelations)
-    if h is not None:
-        count+=1
-print(count)#This is the number of triples that contain a word not in the word embedding
+    listOfRelations = setUpRelations(tripleDict)
+    setOfGoodTriples = setUpGoodTriples(tripleDict)
+    setOfBadTriples = setUpBadTriples(tripleDict)
+    
+    
+    listOfVecs = []
+    listOfBadTriples = list(setOfGoodTriples)
+    listOfGoodTriples = list(setOfBadTriples)
+    while True:
+                
+        goodVector = None
+        while True:
+            if len(listOfGoodTriples) == 0:
+                return listOfVecs
+            goodTripleIndex = random.randint(0,len(listOfGoodTriples)-1)
+            goodTriple = listOfGoodTriples.pop(goodTripleIndex)
+            goodVector = turnTripleIntoGiantVector(goodTriple,listOfRelations, vectorDict)
+            if goodVector is not None:
+                break
+        
+        
+        
+        badVector = None
+        while True:
+            if len(listOfBadTriples) == 0:
+                return listOfVecs
+            badTripleIndex = random.randint(0,len(listOfBadTriples)-1)
+            badTriple = listOfBadTriples.pop(badTripleIndex)
+            badVector = turnTripleIntoGiantVector(badTriple,listOfRelations, vectorDict)
+            if badVector is not None:
+                break
+            
+        listOfVecs.append(np.concatenate((goodVector,np.array([1]))))
+        listOfVecs.append(np.concatenate((badVector,np.array([0])))) 
+        
+            
+  
+    
+    
+def main():
+    tripleList = createTrainingData()
+    
+    lines = 0
+    with open("trainingData.txt", 'w') as file_handler:
+        
+        for tripleArr in tripleList:
+            if True:#Sometimes I'll set this to 'lines<10000' when testing
+                lst = []
+                for i in range(tripleArr.size):
+                    lst.append(float("{:.2f}".format(tripleArr[i])))
+                file_handler.write(str(lst).rstrip(']').lstrip('[')+"\n)
+                if lines%10000 == 0:
+                    print("Lines:",lines)
+                lines+=1
+    
+
+
+main()
 
