@@ -1,0 +1,1 @@
+scp -i bauer_aws_key.pem <path/to/localFile> ubuntu@ec2-54-152-29-242.compute-1.amazonaws.com:~/Bauer-Models/
