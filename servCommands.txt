@@ -1,1 +1,8 @@
-scp -i bauer_aws_key.pem <path/to/localFile> ubuntu@ec2-54-152-29-242.compute-1.amazonaws.com:~/Bauer-Models/
+LOGIN: 
+ssh -i bauer_aws_key.pem ubuntu@ec2-34-207-163-78.compute-1.amazonaws.com
+
+UPLOAD FILE: 
+scp -i bauer_aws_key.pem <path/to/localFile> ubuntu@ec2-34-207-163-78.compute-1.amazonaws.com:~/Bauer-Models
+
+DOWNLOAD FILE:
+scp -i bauer_aws_key.pem ubuntu@ec2-34-207-163-78.compute-1.amazonaws.com:~/Bauer-Models/<filename> .
