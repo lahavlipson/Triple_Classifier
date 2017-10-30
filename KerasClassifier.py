@@ -9,17 +9,18 @@ np.random.seed(7)
 numOfData = 277500
 dataDim = 145
 
+listOfTriples = []
 
 
-
-dataset = np.zeros(numOfData*(dataDim+1))
-dataset.shape = (numOfData, dataDim+1)
+dataset = np.zeros(numOfData*(dataDim+2))
+dataset.shape = (numOfData, dataDim+2)
 lineNum = 0
-with open("/Users/lahavlipson/Research/Triple_Classifier/trainingData.txt") as f:
+with open("trainingData.txt") as f:
     for line in f:
         lArr = line.split(',')
-        assert(len(lArr)==146)
-        dataset[lineNum] = lArr    
+        assert(len(lArr)==147)
+        dataset[lineNum] = lArr[1:] + [lineNum]
+        listOfTriples.append(lArr[0])
         lineNum+=1
 
 #Shuffles rows of data
@@ -29,7 +30,7 @@ np.random.shuffle(dataset)
 X_train = dataset[0:int(numOfData*0.8),0:dataDim]
 Y_train = dataset[0:int(numOfData*0.8),dataDim]
 X_test = dataset[int(numOfData*0.8):,0:dataDim]
-Y_test = dataset[int(numOfData*0.8):,dataDim]
+Y_test = dataset[int(numOfData*0.8):,dataDim:]
 
 
 # create model
@@ -48,7 +49,7 @@ model.add(Dense(1, activation='sigmoid'))
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # Fit the model
-model.fit(X_train, Y_train, epochs=25, batch_size=10)
+model.fit(X_train, Y_train, epochs=1, batch_size=10)
 
 # calculate predictions
 predictions = model.predict(X_test)
@@ -58,6 +59,10 @@ rounded = [round(x[0]) for x in predictions]
 
 #Calculate accuracy on test case
 numMatch = 0
-for i in range(int(numOfData*0.2)):
-    numMatch += int(rounded[i] == Y_test[i])
-print("Accuracy on test:", numMatch/(numOfData*0.2))
+with open("wrong_triples.txt", 'w') as file_handler:
+    for i in range(int(numOfData*0.2)):
+        if rounded[i] == Y_test[i][0]:
+            numMatch+=1
+        else:
+            file_handler.write(listOfTriples[int(Y_test[i][1])]+"\n")        
+    print("Accuracy on test:", numMatch/(numOfData*0.2))

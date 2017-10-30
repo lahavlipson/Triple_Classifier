@@ -125,6 +125,7 @@ def createTrainingData():#Returns list of triples to train on. The value of the 
             goodTriple = listOfGoodTriples.pop(goodTripleIndex)
             goodVector = turnTripleIntoGiantVector(goodTriple,listOfRelations, vectorDict)
             if goodVector is not None:
+                goodVector = (goodTriple,np.concatenate((goodVector,np.array([1]))))
                 break
         
         
@@ -137,10 +138,11 @@ def createTrainingData():#Returns list of triples to train on. The value of the 
             badTriple = listOfBadTriples.pop(badTripleIndex)
             badVector = turnTripleIntoGiantVector(badTriple,listOfRelations, vectorDict)
             if badVector is not None:
+                badVector = (badTriple,np.concatenate((badVector,np.array([0]))))
                 break
             
-        listOfVecs.append(np.concatenate((goodVector,np.array([1]))))
-        listOfVecs.append(np.concatenate((badVector,np.array([0])))) 
+        listOfVecs.append(goodVector)
+        listOfVecs.append(badVector) 
         
             
   
@@ -154,14 +156,14 @@ def main():
         
         for tripleArr in tripleList:
             if True:#Sometimes I'll set this to 'lines<10000' when testing
-                lst = []
-                for i in range(tripleArr.size):
-                    lst.append(float("{:.2f}".format(tripleArr[i])))
+                lst = ['-'.join(tripleArr[0])]
+                for i in range(tripleArr[1].size):
+                    lst.append(float("{:.2f}".format(tripleArr[1][i])))
                 file_handler.write(str(lst).rstrip(']').lstrip('[').replace(" ", "")+"\n")#Replace \n with \n\n\n to make separate arrays more easily visible
                 if lines%10000 == 0:
                     print("Lines:",lines)
                 lines+=1
-                assert(len(lst)==146)#Sanity check
+                assert(len(lst)==147)#Sanity check
     
 
 
