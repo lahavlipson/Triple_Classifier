@@ -37,15 +37,17 @@ def setUpTripleDict():#Creates an array of sets of triples
         if isLineValid(line):
             
             lst = trip[1:]
+            
+            if lst[2] == "-":
+                lst[2] = "negative"
                         
             #Removes -03, -01, etc. for cases like Jump-02
-            if lst[1] != 'polarity':
-                indexOfDash1 = lst[0].find('-')
-                indexOfDash2 = lst[2].find('-')
-                if indexOfDash1 >= 0:
-                    lst[0] = lst[0][0:indexOfDash1]
-                if indexOfDash2 >= 0:
-                    lst[2] = lst[2][0:indexOfDash2] 
+            indexOfDash1 = lst[0].find('-')
+            indexOfDash2 = lst[2].find('-')
+            if indexOfDash1 >= 0:
+                lst[0] = lst[0][0:indexOfDash1]
+            if indexOfDash2 >= 0:
+                lst[2] = lst[2][0:indexOfDash2] 
                 
             tripDict[graphNum].add(tuple(lst))
     return tripDict
@@ -167,6 +169,6 @@ def main():
     
 
 
-main()
+#main()
 
 

@@ -6,7 +6,7 @@ import numpy as np
 np.random.seed(7)
 
 
-numOfData = 277500
+numOfData = 280614
 dataDim = 145
 
 listOfTriples = []
