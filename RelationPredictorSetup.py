@@ -3,9 +3,9 @@ import random
 from TripleClassifier import setupVectors, isLineValid
 
     
+relationList = ["arg0","arg1","arg2","mod"]
 
-
-def setUpTripleDict():#Creates an array of sets of triples
+def setUpTriples():
     tupleSet = set()
     relationSet = set()
     with open("deft-p2-amr-r2-training-ALL.triples") as f:
@@ -32,24 +32,23 @@ def setUpTripleDict():#Creates an array of sets of triples
         return (tupleSet, relationSet)
     
 
-def createRelationDict(triples, rels):
+def createRelationDict(triples):
     relDict = {}    
    
     while len(triples) != 0:
         trip = triples.pop()
         rel = trip[1]
-        if rel in rels:
+        if rel in relationList:
             if rel in relDict:
                 relDict[rel].append(trip)
             else:
                 relDict[rel] = [trip]
 
-    numberOfTripsPerRel = min(len(relDict[rels[0]]),len(relDict[rels[1]]),len(relDict[rels[2]]),len(relDict[rels[3]]))
-    for rel in rels:
+    numberOfTripsPerRel = min(len(relDict[relationList[0]]),len(relDict[relationList[1]]),len(relDict[relationList[2]]),len(relDict[relationList[3]]))
+    for rel in relationList:
         random.shuffle(relDict[rel])
-    for rel in rels:
-        while len(relDict[rel]) > numberOfTripsPerRel:
-            relDict[rel].pop()
+        relDict[rel] = relDict[rel][:numberOfTripsPerRel]
+            
         
     return relDict
 
@@ -66,27 +65,36 @@ def turnTripleIntoGiantVector(triple, vecDict):
     
         
 def createTrainingData(dataDict, gloveVecs):
-    for rel in dataDict:
+    output = []
+    for rel in relationList:
         for trip in dataDict[rel]:
-            vec = turnTripleIntoGiantVector(trip,gloveVecs)
-            if vec is not None:
-                assert(len(vec) == 100)
+            
+            
+            xVec = turnTripleIntoGiantVector(trip,gloveVecs)
+            if xVec is not None:
+                assert(len(xVec) == 100)#Santiy check
+                y = relationList.index(rel)
+                #print(trip, y)
+                vec = list(xVec)+[y,"-".join(trip)]
+                assert(len(vec) == 102)
+                output.append(vec)
+    return output
+
+
+
+def main():
+    triples = list(setUpTriples()[0])
+    rd = createRelationDict(triples)
+
+    vectorDict = setupVectors()
+    trainingData = createTrainingData(rd, vectorDict)
     
-
-
-
-
-triples = list(setUpTripleDict()[0])
-relationList = ["arg0","arg1","arg2","mod"]
-print(len(triples))
-rd = createRelationDict(triples, relationList)
-print(rd['arg0'][1000])
-
-
-vectorDict = setupVectors()
-createTrainingData(rd, vectorDict)
-
+    with open("predictRelationTrain.txt", 'w') as file_handler:
+        for datum in trainingData:
+            strDatum = (','.join(str(v) for v in datum))+"\n"
+            file_handler.write(strDatum)
+             
+main()
 
 
     
-
