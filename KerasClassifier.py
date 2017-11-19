@@ -72,10 +72,15 @@ for r in rels:
             if rounded[i] == Y_test[i][0]:
                 numMatch+=1
             else:
-                file_handler.write(listOfTriples[int(Y_test[i][1])]+"\n")        
+                mistakeType = ""
+                if rounded[i] == 1:
+                    mistakeType = "FP"
+                else:
+                    mistakeType = "FN"
+                file_handler.write(mistakeType+" "+listOfTriples[int(Y_test[i][1])]+"\n")        
         acc = float("{:.2f}".format(numMatch/(numOfData*0.2)))
         print("Accuracy on test:", acc)
         results[r] = acc
 
-print(results)
+#print(results)
         
