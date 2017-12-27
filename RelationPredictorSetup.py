@@ -3,7 +3,7 @@ import random
 from TripleClassifier import setupVectors, isLineValid
 
     
-relationList = ["arg0","arg1","arg2","mod"]
+relationList = ["arg0","arg1","arg2","mod","domain","location","mod","poss","time"]
 
 def setUpTriples():
     tupleSet = set()
@@ -44,8 +44,14 @@ def createRelationDict(triples):
             else:
                 relDict[rel] = [trip]
 
-    numberOfTripsPerRel = min(len(relDict[relationList[0]]),len(relDict[relationList[1]]),len(relDict[relationList[2]]),len(relDict[relationList[3]]))
+    numberOfTripsPerRel = -1
     for rel in relationList:
+        numberOfTripsPerRel = max(numberOfTripsPerRel,len(relDict[rel]))
+    print("numberOfTripsPerRel:",numberOfTripsPerRel)
+    for rel in relationList:
+        while len(relDict[rel]) < numberOfTripsPerRel:
+            relDict[rel] += relDict[rel]
+        
         random.shuffle(relDict[rel])
         relDict[rel] = relDict[rel][:numberOfTripsPerRel]
             
@@ -85,9 +91,15 @@ def createTrainingData(dataDict, gloveVecs):
 def main():
     triples = list(setUpTriples()[0])
     rd = createRelationDict(triples)
+    
+    
+    for rel in relationList:
+        print(len(rd[rel]))
 
     vectorDict = setupVectors()
     trainingData = createTrainingData(rd, vectorDict)
+    
+    print(len(trainingData))
     
     with open("predictRelationTrain.txt", 'w') as file_handler:
         for datum in trainingData:
