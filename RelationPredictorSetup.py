@@ -47,7 +47,7 @@ def createRelationDict(triples):
     numberOfTripsPerRel = -1
     for rel in relationList:
         numberOfTripsPerRel = max(numberOfTripsPerRel,len(relDict[rel]))
-    print("numberOfTripsPerRel:",numberOfTripsPerRel)
+    #print("numberOfTripsPerRel:",numberOfTripsPerRel)
     for rel in relationList:
         while len(relDict[rel]) < numberOfTripsPerRel:
             relDict[rel] += relDict[rel]
@@ -93,8 +93,8 @@ def main():
     rd = createRelationDict(triples)
     
     
-    for rel in relationList:
-        print(len(rd[rel]))
+#    for rel in relationList:
+#        print(len(rd[rel]))
 
     vectorDict = setupVectors()
     trainingData = createTrainingData(rd, vectorDict)

@@ -4,14 +4,8 @@ from keras.models import model_from_json
 from TripleClassifier import setupVectors
 import numpy as np
 
-def isNoun(pos):
-	return pos[0] == 'N'
-
-def isVerb(pos):
-	return pos[0] == 'V'
-
-def isAdj(pos):
-	return pos[0] == 'J'
+def isOC(pos):
+    return pos in ["JJ","JJR","JJS","MD","RB","RBR","RBS"] or pos[0] == "N" or pos[0] == "V"
 
 def isPunc(s):
     return s in list(".,/\"\'!")
@@ -35,6 +29,7 @@ def createVector(double, vecDict):
         return None 
     
 def predictRel(model, vectorDict,double):
+    double = tuple([double[0].lower(),double[1].lower()])
     relChoices = ["arg0","arg1","arg2","mod","domain","location","mod","poss","time"]
     vec = createVector(double,vectorDict)
     if vec is None:
@@ -60,34 +55,35 @@ def readModel():
 def buildAMRDict(model,vectorDict):
     wordDict = {}
     for i in sent:
-        if isEnglishWord(sent[i].word):
+        if isEnglishWord(sent[i].word) and sent[i].pos != "IN":
             children = []
             for j in sent:
                 if (sent[j].parent_id == sent[i].node_id):
                     children.append(sent[j].node_id)
-
-            wordDict[sent[i].node_id] = (sent[i].word,children, sent[i].pos)            
+                
+            if children != [] or isOC(sent[i].pos) or sent[i].word.isdigit():
+                wordDict[sent[i].node_id] = (sent[i].word,children, sent[i].pos)            
     return wordDict
 
 
-def getAMR(wordDict, index, depth, model, vectorDict):
-    output = "("+wordDict[index][0]
+def getAMR(wordDict, index, depth, model, vectorDict,varNum, oneLine):
+    output = "(x"+str(varNum.pop(0))+" / "+wordDict[index][0]
     for child in wordDict[index][1]:
         if child != index and child in wordDict:
             double = (wordDict[index][0],wordDict[child][0])
             arg = "!ROC" #This current node is not an Open-Class word
-            if isNoun(wordDict[index][2]) or isVerb(wordDict[index][2]) or isAdj(wordDict[index][2]):
-                arg = predictRel(model, vectorDict, double)
-            output += "\n" + "   "*depth + ":" + arg + getAMR(wordDict,child,depth+1, model, vectorDict)
+            if wordDict[child][2] == "CD":
+                arg = "quant"
+            elif wordDict[child][2][:3] == "NNP":
+                arg = "name"
+            elif isOC(wordDict[index][2]):
+                arg = predictRel(model, vectorDict, double)  
+            if not oneLine:    
+                output += "\n" + "   "*(depth+1)
+            output += " :" + arg + " " + getAMR(wordDict,child,depth+1, model, vectorDict, varNum, oneLine)        
     return output +")";
 
 
-
-#Getting a sentence from the dataset
-f = DepsFile(open("deft-p2-amr-r2-amrs-training-ALL-hyphen.deps",'r'))
-sent = f.next_sentence()[0]
-for i in range(249):#Sentence number 110. This is arbitrary (change it!)
-	sent = f.next_sentence()[0]
 
 
 #Get GloVe vectors
@@ -96,17 +92,45 @@ vectorDict = setupVectors()
 #Get neural net
 model = readModel()
 
-#get dictionary containing each word and its child
-wordDict = buildAMRDict(model,vectorDict)
-
-#Find root of tree
-rootID = -1
-for i in range(1,len(sent)+1):
-        if sent[i].node_id == sent[i].parent_id:
-            rootID = sent[i].node_id
 
 
-print("\n"+getAMR(wordDict, rootID, 1, model, vectorDict))
-print("\n"+getSentenceAsStr(sent))
+#Getting a sentence from the dataset
+f = DepsFile(open("deft-p2-amr-r2-amrs-training-ALL-hyphen.deps",'r'))
 
+sentenceNumber = 6
+
+for j in range(sentenceNumber):
+    sent = f.next_sentence()[0]
+if j!=244:#sentence 244 has problems
+
+    #If parent is proposition, set parent = grandparent
+    for i in sent:
+        if sent[i].parent_pos == "IN":
+            sent[i].parent_id = sent[sent[i].parent_id].parent_id
+            
+    
+    
+    
+    #get dictionary containing each word and its child
+    wordDict = buildAMRDict(model,vectorDict)
+    
+    #Handle names
+    for i in wordDict:
+        if wordDict[i][2] == "NNP" or wordDict[i][2] == "NNPS":
+            wordDict[i] = ("\""+wordDict[i][0]+"\"",wordDict[i][1],wordDict[i][2])
+    
+    #Find root of tree
+    rootID = -1
+    for i in range(1,len(sent)+1):
+            if sent[i].node_id == sent[i].parent_id and sent[i].pos != "IN" and isEnglishWord(sent[i].word):
+                rootID = sent[i].node_id
+    
+    if rootID > 0:
+        varNum = list(range(100))
+        amrStr = getAMR(wordDict, rootID, 0, model, vectorDict,varNum, False)
+        print("\n"+amrStr)
+        print("\n"+getSentenceAsStr(sent))
+        
+        
+        
 

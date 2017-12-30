@@ -5,7 +5,7 @@ from keras.utils import np_utils
 
 
 dataDim = 100
-numOfData = 456106
+numOfData = 456302
 dataset = np.zeros(numOfData*(dataDim+2))
 dataset.shape = (numOfData, dataDim+2)
 
@@ -33,8 +33,6 @@ Y_test = dataset[int(numOfData*0.8):,dataDim:]
 
 Y_train = np_utils.to_categorical(Y_train, 9)
 
-print(Y_train[30:40])
-
 def createAndTrainModel():
 
     model = Sequential()
@@ -55,7 +53,7 @@ def createAndTrainModel():
     print(model.summary())
     
     # Fit the model
-    model.fit(X_train, Y_train, epochs=3, batch_size=10)
+    model.fit(X_train, Y_train, epochs=1, batch_size=10)
     
     # serialize model to JSON
     model_json = model.to_json()
